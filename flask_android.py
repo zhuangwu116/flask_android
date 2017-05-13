@@ -4,13 +4,55 @@ from flask import Flask,request,jsonify
 import werkzeug
 import datetime
 import os
-
+from flask_sqlalchemy import SQLAlchemy
 
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)),'affe_demos_uploads')
 
 app = Flask(__name__,static_folder='static')
 app.config['STATIC_FOLDER'] = UPLOAD_FOLDER
+app.config['SQLALCHEMY_DATABASE_URI']='mysql://zhuangwu:zhuangwu@localhost/flask_db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+db=SQLAlchemy(app)
+class Edtz(db.Model):
+    __tablename__ = 'ed_t_edtz'
+    edbh=db.Column(db.String(40),primary_key=True)
+    tzmc=db.Column(db.String(200),nullable=True)
+    tznr=db.Column(db.String(2000),nullable=True)
+    edlx=db.Column(db.String(20),nullable=False)
+    ms=db.Column(db.String(2000),nullable=True)
+    zdr=db.Column(db.String(200),nullable=True)
+    zdsj=db.Column(db.Date,nullable=True)
+    tzbh=db.Column(db.String(40),nullable=False)
+    @staticmethod
+    def add(edtz):
+        db.session.add(edtz)
+        db.session.commit()
+class Ied(db.Model):
+    __tablename__='ed_t_ied'
+    bh=db.Column(db.String(20),primary_key=True)
+    lx=db.Column(db.String(2),primary_key=True)
+    mc=db.Column(db.String(20),nullable=True)
+    tx=db.Column(db.String(200),nullable=True)
+    zylx=db.Column(db.String(200),nullable=True)
+    qbfs=db.Column(db.String(200),nullable=True)
+    hgp=db.Column(db.String(200),nullable=True)
+    fhjl=db.Column(db.String(200),nullable=True)
+    wlpg=db.Column(db.String(200),nullable=True)
+    bz=db.Column(db.String(200),nullable=True)
+    ms=db.Column(db.String(200),nullable=True)
+    tp1=db.Column(db.String(200),nullable=True)
+    tp2=db.Column(db.String(200),nullable=True)
+    tp3=db.Column(db.String(200),nullable=True)
+    sp1=db.Column(db.String(200),nullable=True)
+    sp2=db.Column(db.String(200),nullable=True)
+    sp3=db.Column(db.String(200),nullable=True)
+    czcl=db.Column(db.String(200),nullable=True)
+    pbqc=db.Column(db.String(200),nullable=True)
+    @staticmethod
+    def add(ied):
+        db.session.add(ied)
+        db.session.commit()
 @app.route('/')
 def hello_world():
     return 'Hello World!'
@@ -30,12 +72,15 @@ def classify_upload_new():
     jsonobject=dict()
     jsonobject['time']='0.3'
     jsonobject['errorMsg']='success'
-    for i in range(1,5):
+    ieds=Ied.query.all()[:5]
+    i=0;
+    for ied in ieds:
         info=dict()
-        info['id']=i
-        info['label']='label:'+str(i)
+        info['id']=ied.bh
+        info['label']='label:'+ied.mc
         info['confidence']=float(i)
         array.append(info)
+        i+=1
     jsonobject['arrayList']=array
     return jsonify(jsonobject)
 @app.route('/query', methods=['GET'])
@@ -44,19 +89,16 @@ def query():
     ret['bValidate']= 0
     print str(ret)
     id_=request.args.get('id','0',type=str)
-    if id_ is -1:
-        print u'请求格式错误（如没有id）'
-        return jsonify(ret)
-    retsult='1'
-    if retsult is None:
+    ied=Ied.query.filter_by(bh=id_).first()
+    if ied is None:
        print u'无数据'
        return jsonify(ret)
     ret['bValidate'] = 1
-    ret['id']=retsult.id
-    ret['name']=retsult.iedname
-    ret['type']=retsult.iedtype
-    ret['url']='static/img/test.jpg'
-    ret['details']=u'手榴弹是一种能攻能防的小型手投弹药，也是使用较广、用量较大的弹药。它既能杀伤有生目标，又能破坏坦克和装甲车辆。手榴弹由于体积小、质量小，携带、使用方便，曾在历次战争中发挥过重要作用。'
+    ret['bh']=ied.bh
+    ret['mc']=ied.mc
+    ret['url']=ied.tp1
+    ret['ms']=ied.ms
+    ret['czcl']=ied.czcl
     print '=============================================================='
     #print str(retsult.id), retsult.iedname, retsult.iedtype, retsult.ied_image_file, retsult.ied_video_file
     print ret
